@@ -84,10 +84,8 @@ if st.sidebar.button('追加'):
             player_name = line.replace("がロビーに参加しました", "")
             rank = get_summoner_rank(player_name.split('#')[0], player_name.split('#')[1])
             # 重複チェック
-            # if player_name not in participants:
-            #     participants.append([player_name , rank[0], rank[1]])
-            # テスト
-            participants.append([player_name , rank[0], rank[1]])
+            if player_name not in participants:
+                participants.append([player_name , rank[0], rank[1]])
 
     # 抽出したリストをセッション状態で管理する
     st.session_state.participants = participants
