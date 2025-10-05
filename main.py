@@ -22,7 +22,6 @@ def get_api_response(base_url, endpoint, params=None):
     params["api_key"] = RIOT_API_KEY
     
     url = f"{base_url}{endpoint}"
-    print(url)
     response = requests.get(url, params=params)
     response.raise_for_status()  # 200番台以外のステータスコードの場合、例外を発生させる
     return response.json()
