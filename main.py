@@ -1,11 +1,18 @@
 import streamlit as st
 import pandas as pd
-import random
 import itertools
 import requests
 
-
+# --- 定数定義 ---
 RIOT_API_KEY = st.secrets["RIOT_API_KEY"]
+
+# ランク情報を一元管理
+TIER_LIST = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"]
+HIGH_TIER_LIST = ["MASTER", "GRANDMASTER", "CHALLENGER"]
+ALL_TIER_LIST = TIER_LIST + HIGH_TIER_LIST
+RANK_LIST = ["IV", "III", "II", "I"]
+
+# --- API関連の関数 ---
 
 def get_api_response(base_url, endpoint, params=None):
     """APIにリクエストを送信し、JSONレスポンスを返す共通関数"""
@@ -37,10 +44,9 @@ def get_summoner_rank(game_name, tag_line):
             return entry.get("tier"), entry.get("rank")
     return "UNRANKED", ""
 
+# --- 内部ロジックの関数 ---
+
 def get_tuyosa(tier, division):
-    tier_list = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"]
-    rank_list = ["IV", "III", "II", "I"]
-    tuyosa = 0
     if tier == "UNRANKED":
         return 0
     if tier == "MASTER":
@@ -49,10 +55,12 @@ def get_tuyosa(tier, division):
         return 3000
     if tier == "CHALLENGER":
         return 3100
-    tuyosa += ( tier_list.index(tier)) * 400
-    tuyosa += ( rank_list.index(division)) * 100
+    
+    tuyosa = (ALL_TIER_LIST.index(tier)) * 400
+    tuyosa += (RANK_LIST.index(division)) * 100
     return tuyosa
 
+# --- Streamlit UI ---
 # ページのタイトル
 st.sidebar.title('カスタム振り分け')
 
@@ -98,21 +106,18 @@ if 'participants' in st.session_state and st.session_state.participants:
     title_placeholder = st.empty()
 
     # ドロップダウンリスト用のランク選択肢を生成
-    tier_list = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"]
-    rank_list = ["IV", "III", "II", "I"]
-    high_tier_list = ["MASTER", "GRANDMASTER", "CHALLENGER"]
     rank_options = ["UNRANKED"]
-    for tier in tier_list:
-        for rank in rank_list:
+    for tier in TIER_LIST:
+        for rank in RANK_LIST:
             rank_options.append(f"{tier} {rank}")
-    rank_options.extend(high_tier_list)
+    rank_options.extend(HIGH_TIER_LIST)
 
     # 現在の参加者リストからDataFrameを作成
     df = pd.DataFrame({
         "選択": [True] * len(st.session_state.participants), # チェックボックス用の列
         "参加者": [p[0] for p in st.session_state.participants],
         "ランク": [
-            p[1] if p[1] in high_tier_list else f"{p[1]} {p[2]}".strip()
+            p[1] if p[1] in HIGH_TIER_LIST else f"{p[1]} {p[2]}".strip()
             for p in st.session_state.participants
         ],
         "強さ" : [get_tuyosa(p[1], p[2]) for p in st.session_state.participants]
@@ -153,6 +158,11 @@ if 'participants' in st.session_state and st.session_state.participants:
         # チェックボックスがTrueになっている参加者名だけを抽出
         selected_players_df = edited_df[edited_df["選択"] == True]
         players = list(selected_players_df.itertuples(index=False, name=None))
+
+        # 参加人数が10人でない場合はエラーメッセージを表示して終了
+        if len(players) != 10:
+            st.error("チーム分けを行うには、10人のプレイヤーを選択してください。")
+            st.stop()
 
         # 全プレイヤーの合計強さと、理想的なチームの強さを計算
         total_strength = sum(player[3] for player in players)
