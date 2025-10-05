@@ -1,0 +1,24 @@
+# Streamlit secrets file
+.streamlit/secrets.toml
+
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor specific files
+# .vscode/ # チームで設定を共有する場合はコメントアウトを外さない
+.idea/
+
+# Environment variables
+.env
+
+# Log files
+*.log
