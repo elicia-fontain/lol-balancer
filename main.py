@@ -22,16 +22,23 @@ def get_api_response(base_url, endpoint, params=None):
     params["api_key"] = RIOT_API_KEY
     
     url = f"{base_url}{endpoint}"
+    print(url)
     response = requests.get(url, params=params)
     response.raise_for_status()  # 200番台以外のステータスコードの場合、例外を発生させる
     return response.json()
 
 def get_summoner_rank(game_name, tag_line):
     """Riot IDからPUUIDを取得し、そのプレイヤーのランクTierを返す"""
+    # Riot IDとTaglineからスペースと見えない制御文字を削除
+    # \u2066, \u2069 などがチャットのコピペで混入することがあるため
+    name = "".join(char for char in game_name if char.isprintable()).strip()
+    tag = "".join(char for char in tag_line if char.isprintable()).strip()
+    print(f"Sanitized: '{name}'#'{tag}'")
+    
     base_url_puuid = "https://asia.api.riotgames.com"
-    endpoint_puuid = f"/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
+    endpoint_puuid = f"/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
     account = get_api_response(base_url_puuid, endpoint_puuid, params={})
-    puuid = account.get("puuid")
+    puuid = account.get("puuid") # puuidが取得できない場合、Noneになる
     
     base_url_entry = "https://jp1.api.riotgames.com"
     endpoint_entry = f"/lol/league/v4/entries/by-puuid/{puuid}"
@@ -89,7 +96,8 @@ if st.sidebar.button('追加'):
         # line（各行）に "がロビーに参加しました" という文字列が含まれているかチェック
         if '#' in line:
             # プレイヤー名だけを抽出してリストに追加
-            player_name = line.replace("がロビーに参加しました", "")
+            player_name = line.replace("がロビーに参加しました。", "")
+            print(player_name)
             rank = get_summoner_rank(player_name.split('#')[0], player_name.split('#')[1])
             # 重複チェック
             if player_name not in participants:
