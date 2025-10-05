@@ -190,7 +190,8 @@ if 'participants' in st.session_state and st.session_state.participants:
         )
         # 列ヘッダーのテキストを更新
         result_df.columns = pd.MultiIndex.from_tuples([
-            (f'Blue Team', 'プレイヤー'), (f'Blue Team', 'ランク'),
+            (f'Blue Team', 'プレイヤー'),
+            (f'Blue Team', 'ランク'),
             (f'Red Team', 'プレイヤー'), (f'Red Team', 'ランク')
         ])
         st.markdown(result_df.to_html(index=False), unsafe_allow_html=True)
